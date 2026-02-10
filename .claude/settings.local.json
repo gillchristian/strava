@@ -19,7 +19,8 @@
       "Bash(go version:*)",
       "Bash(go mod init:*)",
       "Bash(go mod tidy:*)",
-      "Bash(go build:*)"
+      "Bash(go build:*)",
+      "WebSearch"
     ]
   }
 }

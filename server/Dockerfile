@@ -1,8 +1,8 @@
 FROM golang:1.24-alpine AS build
 WORKDIR /app
-COPY go.mod go.sum ./
+COPY server/go.mod server/go.sum ./
 RUN go mod download
-COPY . .
+COPY server/ .
 RUN go build -o cadence-server .
 
 FROM alpine:3.21
