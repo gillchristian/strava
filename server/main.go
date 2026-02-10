@@ -32,10 +32,12 @@ func main() {
 	clientID := os.Getenv("STRAVA_CLIENT_ID")
 	clientSecret := os.Getenv("STRAVA_CLIENT_SECRET")
 
-	tokenStore, err := store.NewTokenStore(dbPath)
+	db, err := store.OpenDB(dbPath)
 	if err != nil {
-		log.Fatalf("Failed to open token store: %v", err)
+		log.Fatalf("Failed to open database: %v", err)
 	}
+
+	tokenStore := store.NewTokenStore(db)
 
 	stravaClient := &strava.Client{
 		ClientID:     clientID,

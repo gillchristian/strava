@@ -4,10 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
-	"strings"
 	"time"
-
-	_ "modernc.org/sqlite"
 )
 
 type Tokens struct {
@@ -29,43 +26,8 @@ func GenerateSessionToken() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func NewTokenStore(dbPath string) (*TokenStore, error) {
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if old single-user schema exists and migrate
-	var hasIDCheck bool
-	row := db.QueryRow("SELECT sql FROM sqlite_master WHERE type='table' AND name='tokens'")
-	var tableSql sql.NullString
-	if err := row.Scan(&tableSql); err == nil && tableSql.Valid {
-		// Old schema has CHECK(id = 1); drop and recreate
-		if strings.Contains(tableSql.String, "CHECK") {
-			hasIDCheck = true
-		}
-	}
-
-	if hasIDCheck {
-		if _, err := db.Exec("DROP TABLE tokens"); err != nil {
-			return nil, err
-		}
-	}
-
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS tokens (
-			athlete_id INTEGER PRIMARY KEY,
-			session_token TEXT NOT NULL UNIQUE,
-			access_token TEXT NOT NULL,
-			refresh_token TEXT NOT NULL,
-			expires_at INTEGER NOT NULL
-		)
-	`)
-	if err != nil {
-		return nil, err
-	}
-
-	return &TokenStore{db: db}, nil
+func NewTokenStore(db *sql.DB) *TokenStore {
+	return &TokenStore{db: db}
 }
 
 func (s *TokenStore) GetTokensBySession(sessionToken string) (*Tokens, error) {
