@@ -20,7 +20,8 @@
       "Bash(go mod init:*)",
       "Bash(go mod tidy:*)",
       "Bash(go build:*)",
-      "WebSearch"
+      "WebSearch",
+      "WebFetch(domain:fly.io)"
     ]
   }
 }
