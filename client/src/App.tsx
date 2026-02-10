@@ -21,7 +21,7 @@ function App() {
   if (!authenticated) {
     return (
       <Layout>
-        <h1 className="mb-2 text-2xl font-bold text-gray-900">Strava Trends</h1>
+        <h1 className="mb-2 text-2xl font-bold text-gray-900">Trends</h1>
         <p className="mb-8 text-gray-500">View your running trends from the last 30 days.</p>
         <LoginButton onClick={login} />
       </Layout>
@@ -32,7 +32,7 @@ function App() {
     <Layout>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Strava Trends</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Trends</h1>
           {lastFetched && (
             <p className="text-xs text-gray-400">
               Last updated: {new Date(lastFetched).toLocaleString()}

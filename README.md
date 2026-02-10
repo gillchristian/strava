@@ -1,4 +1,4 @@
-# Strava Trends
+# Trends
 
 Visualize your Strava activity trends over time.
 
