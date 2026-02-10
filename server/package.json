@@ -1,5 +1,5 @@
 {
-  "name": "strava-trends-server",
+  "name": "cadence-server",
   "private": true,
   "version": "0.0.0",
   "type": "module",

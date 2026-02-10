@@ -13,7 +13,7 @@ npm run lint         # ESLint across the client
 
 ## Architecture
 
-Full-stack TypeScript app that visualizes Strava running activity trends. Split deployment: React frontend on Vercel, Express backend on Fly.io. Monorepo with separate `client/` and `server/` packages.
+Cadence — a monthly snapshot of your running metrics. Full-stack TypeScript app that visualizes Strava running activity data. Split deployment: React frontend on Vercel, Express backend on Fly.io. Monorepo with separate `client/` and `server/` packages.
 
 **Frontend (`client/`)** — React 19 + Vite + Tailwind CSS v4 + Recharts. Custom hooks (`useAuth`, `useActivities`, `useChartData`) encapsulate auth flow, data fetching with localStorage caching, and chart data normalization (0-1 range). API client in `client/src/lib/api.ts`.
 

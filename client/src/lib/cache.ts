@@ -1,6 +1,6 @@
 import type { CachedActivities, StravaActivity } from '../types';
 
-const CACHE_KEY = 'strava-trends-activities';
+const CACHE_KEY = 'cadence-activities';
 
 export function getCachedActivities(): CachedActivities | null {
   try {

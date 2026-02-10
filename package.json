@@ -1,5 +1,5 @@
 {
-  "name": "strava-trends",
+  "name": "cadence",
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
