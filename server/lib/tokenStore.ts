@@ -1,6 +1,4 @@
-import { readFileSync, writeFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import Database from 'better-sqlite3';
 
 interface Tokens {
   access_token: string;
@@ -9,41 +7,35 @@ interface Tokens {
   athlete_id: number;
 }
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const TOKEN_FILE = join(__dirname, '..', '..', 'tokens.json');
+const db = new Database(process.env.DB_PATH || 'tokens.db');
 
-let tokens: Tokens | null = null;
-
-function loadFromDisk(): void {
-  try {
-    const data = readFileSync(TOKEN_FILE, 'utf-8');
-    tokens = JSON.parse(data);
-  } catch {
-    tokens = null;
-  }
-}
-
-loadFromDisk();
+db.exec(`
+  CREATE TABLE IF NOT EXISTS tokens (
+    id INTEGER PRIMARY KEY CHECK(id = 1),
+    access_token TEXT NOT NULL,
+    refresh_token TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    athlete_id INTEGER NOT NULL
+  )
+`);
 
 export function getTokens(): Tokens | null {
-  return tokens;
+  const row = db.prepare('SELECT access_token, refresh_token, expires_at, athlete_id FROM tokens WHERE id = 1').get() as Tokens | undefined;
+  return row ?? null;
 }
 
-export function setTokens(newTokens: Tokens): void {
-  tokens = newTokens;
-  writeFileSync(TOKEN_FILE, JSON.stringify(newTokens, null, 2));
+export function setTokens(tokens: Tokens): void {
+  db.prepare(
+    'INSERT OR REPLACE INTO tokens (id, access_token, refresh_token, expires_at, athlete_id) VALUES (1, ?, ?, ?, ?)'
+  ).run(tokens.access_token, tokens.refresh_token, tokens.expires_at, tokens.athlete_id);
 }
 
 export function clearTokens(): void {
-  tokens = null;
-  try {
-    writeFileSync(TOKEN_FILE, '');
-  } catch {
-    // ignore
-  }
+  db.prepare('DELETE FROM tokens WHERE id = 1').run();
 }
 
 export function isTokenExpired(): boolean {
+  const tokens = getTokens();
   if (!tokens) return true;
   const bufferSeconds = 300; // 5 minutes
   return Date.now() / 1000 >= tokens.expires_at - bufferSeconds;

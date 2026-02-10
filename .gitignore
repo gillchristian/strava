@@ -26,3 +26,4 @@ dist-ssr
 # Secrets & tokens
 .env
 tokens.json
+*.db

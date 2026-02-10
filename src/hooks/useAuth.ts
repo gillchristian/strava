@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiFetch } from '../lib/api';
+import { apiFetch, API_URL } from '../lib/api';
 
 interface AuthStatus {
   authenticated: boolean;
@@ -18,11 +18,11 @@ export function useAuth() {
   }, []);
 
   function login() {
-    window.location.href = '/auth/strava';
+    window.location.href = API_URL + '/auth/strava';
   }
 
   async function logout() {
-    await fetch('/auth/logout', { method: 'POST' });
+    await fetch(API_URL + '/auth/logout', { method: 'POST' });
     setAuthenticated(false);
   }
 

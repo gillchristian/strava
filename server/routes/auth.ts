@@ -6,7 +6,8 @@ const router = Router();
 
 router.get('/auth/strava', (_req, res) => {
   const clientId = process.env.STRAVA_CLIENT_ID;
-  const redirectUri = `http://localhost:${process.env.PORT || 3001}/auth/callback`;
+  const baseUrl = process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
+  const redirectUri = `${baseUrl}/auth/callback`;
   const scope = 'activity:read_all';
 
   const url = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&approval_prompt=auto`;
@@ -25,12 +26,8 @@ router.get('/auth/callback', async (req, res) => {
   try {
     await exchangeCodeForTokens(code);
 
-    const redirectUrl =
-      process.env.NODE_ENV === 'production'
-        ? '/?auth=success'
-        : 'http://localhost:5173/?auth=success';
-
-    res.redirect(redirectUrl);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    res.redirect(`${frontendUrl}/?auth=success`);
   } catch (err) {
     console.error('OAuth callback error:', err);
     res.status(500).send('Authentication failed');
