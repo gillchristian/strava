@@ -28,7 +28,6 @@ npm run dev             # Frontend: http://localhost:5173
 
 ```
 fly launch
-fly volumes create data -r sjc
 fly secrets set STRAVA_CLIENT_ID=... STRAVA_CLIENT_SECRET=... FRONTEND_URL=https://your-app.vercel.app API_BASE_URL=https://your-app.fly.dev
 fly deploy
 ```
