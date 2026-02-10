@@ -19,7 +19,6 @@ const (
 type Client struct {
 	ClientID     string
 	ClientSecret string
-	Store        *store.TokenStore
 }
 
 type tokenResponse struct {
@@ -31,7 +30,7 @@ type tokenResponse struct {
 	} `json:"athlete"`
 }
 
-func (c *Client) ExchangeCodeForTokens(code string) error {
+func (c *Client) ExchangeCodeForTokens(code string) (*store.Tokens, error) {
 	resp, err := http.PostForm(stravaOAuth+"/token", url.Values{
 		"client_id":     {c.ClientID},
 		"client_secret": {c.ClientSecret},
@@ -39,37 +38,29 @@ func (c *Client) ExchangeCodeForTokens(code string) error {
 		"grant_type":    {"authorization_code"},
 	})
 	if err != nil {
-		return fmt.Errorf("token exchange request failed: %w", err)
+		return nil, fmt.Errorf("token exchange request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("token exchange failed: %d %s", resp.StatusCode, body)
+		return nil, fmt.Errorf("token exchange failed: %d %s", resp.StatusCode, body)
 	}
 
 	var data tokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return fmt.Errorf("token exchange decode failed: %w", err)
+		return nil, fmt.Errorf("token exchange decode failed: %w", err)
 	}
 
-	return c.Store.SetTokens(store.Tokens{
+	return &store.Tokens{
 		AccessToken:  data.AccessToken,
 		RefreshToken: data.RefreshToken,
 		ExpiresAt:    data.ExpiresAt,
 		AthleteID:    data.Athlete.ID,
-	})
+	}, nil
 }
 
-func (c *Client) RefreshAccessToken() error {
-	tokens, err := c.Store.GetTokens()
-	if err != nil {
-		return fmt.Errorf("failed to get tokens: %w", err)
-	}
-	if tokens == nil {
-		return fmt.Errorf("no tokens to refresh")
-	}
-
+func (c *Client) RefreshAccessToken(tokens *store.Tokens) (*store.Tokens, error) {
 	resp, err := http.PostForm(stravaOAuth+"/token", url.Values{
 		"client_id":     {c.ClientID},
 		"client_secret": {c.ClientSecret},
@@ -77,50 +68,42 @@ func (c *Client) RefreshAccessToken() error {
 		"refresh_token": {tokens.RefreshToken},
 	})
 	if err != nil {
-		return fmt.Errorf("token refresh request failed: %w", err)
+		return nil, fmt.Errorf("token refresh request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("token refresh failed: %d %s", resp.StatusCode, body)
+		return nil, fmt.Errorf("token refresh failed: %d %s", resp.StatusCode, body)
 	}
 
 	var data tokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return fmt.Errorf("token refresh decode failed: %w", err)
+		return nil, fmt.Errorf("token refresh decode failed: %w", err)
 	}
 
-	return c.Store.SetTokens(store.Tokens{
+	return &store.Tokens{
 		AccessToken:  data.AccessToken,
 		RefreshToken: data.RefreshToken,
 		ExpiresAt:    data.ExpiresAt,
 		AthleteID:    tokens.AthleteID,
-	})
+	}, nil
 }
 
-func (c *Client) GetValidAccessToken() (string, error) {
-	if c.Store.IsTokenExpired() {
-		if err := c.RefreshAccessToken(); err != nil {
-			return "", err
+// GetValidAccessToken returns a valid access token, refreshing if needed.
+// If a refresh occurred, refreshedTokens is non-nil and should be persisted.
+func (c *Client) GetValidAccessToken(tokens *store.Tokens) (accessToken string, refreshedTokens *store.Tokens, err error) {
+	if store.IsTokenExpired(tokens) {
+		refreshed, err := c.RefreshAccessToken(tokens)
+		if err != nil {
+			return "", nil, err
 		}
+		return refreshed.AccessToken, refreshed, nil
 	}
-	tokens, err := c.Store.GetTokens()
-	if err != nil {
-		return "", err
-	}
-	if tokens == nil {
-		return "", fmt.Errorf("no tokens available")
-	}
-	return tokens.AccessToken, nil
+	return tokens.AccessToken, nil, nil
 }
 
-func (c *Client) FetchActivities(after, before int64) ([]json.RawMessage, error) {
-	accessToken, err := c.GetValidAccessToken()
-	if err != nil {
-		return nil, err
-	}
-
+func (c *Client) FetchActivities(accessToken string, after, before int64) ([]json.RawMessage, error) {
 	params := url.Values{
 		"after":    {strconv.FormatInt(after, 10)},
 		"before":   {strconv.FormatInt(before, 10)},

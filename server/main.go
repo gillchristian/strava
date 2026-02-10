@@ -40,7 +40,6 @@ func main() {
 	stravaClient := &strava.Client{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		Store:        tokenStore,
 	}
 
 	authHandler := &handlers.AuthHandler{
@@ -61,6 +60,7 @@ func main() {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{frontendURL},
 		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders: []string{"Authorization", "Content-Type"},
 	}))
 
 	r.Get("/auth/strava", authHandler.StravaRedirect)

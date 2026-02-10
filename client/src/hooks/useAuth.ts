@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiFetch, API_URL } from '../lib/api';
+import { apiFetch, API_URL, getSessionToken, setSessionToken, clearSessionToken } from '../lib/api';
 
 interface AuthStatus {
   authenticated: boolean;
@@ -11,10 +11,27 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiFetch<AuthStatus>('/auth/status')
-      .then((data) => setAuthenticated(data.authenticated))
-      .catch(() => setAuthenticated(false))
-      .finally(() => setLoading(false));
+    // Check URL for ?token= param from OAuth callback
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (token) {
+      setSessionToken(token);
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    // Check auth status if we have a session token
+    if (getSessionToken()) {
+      apiFetch<AuthStatus>('/auth/status')
+        .then((data) => setAuthenticated(data.authenticated))
+        .catch(() => {
+          clearSessionToken();
+          setAuthenticated(false);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   function login() {
@@ -22,7 +39,8 @@ export function useAuth() {
   }
 
   async function logout() {
-    await fetch(API_URL + '/auth/logout', { method: 'POST' });
+    await apiFetch('/auth/logout', { method: 'POST' });
+    clearSessionToken();
     setAuthenticated(false);
   }
 

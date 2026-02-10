@@ -6,9 +6,10 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 
-	"cadence-server/strava"
 	"cadence-server/store"
+	"cadence-server/strava"
 )
 
 type AuthHandler struct {
@@ -17,6 +18,14 @@ type AuthHandler struct {
 	ClientID    string
 	APIBaseURL  string
 	FrontendURL string
+}
+
+func getSessionToken(r *http.Request) string {
+	auth := r.Header.Get("Authorization")
+	if strings.HasPrefix(auth, "Bearer ") {
+		return auth[7:]
+	}
+	return ""
 }
 
 func (h *AuthHandler) StravaRedirect(w http.ResponseWriter, r *http.Request) {
@@ -36,24 +45,47 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Strava.ExchangeCodeForTokens(code); err != nil {
+	tokens, err := h.Strava.ExchangeCodeForTokens(code)
+	if err != nil {
 		log.Printf("OAuth callback error: %v", err)
 		http.Error(w, "Authentication failed", http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, h.FrontendURL+"/?auth=success", http.StatusFound)
+	sessionToken, err := store.GenerateSessionToken()
+	if err != nil {
+		log.Printf("Session token generation error: %v", err)
+		http.Error(w, "Authentication failed", http.StatusInternalServerError)
+		return
+	}
+
+	if err := h.Store.SetTokens(*tokens, sessionToken); err != nil {
+		log.Printf("Token store error: %v", err)
+		http.Error(w, "Authentication failed", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, h.FrontendURL+"/?token="+url.QueryEscape(sessionToken), http.StatusFound)
 }
 
 func (h *AuthHandler) Status(w http.ResponseWriter, r *http.Request) {
-	tokens, err := h.Store.GetTokens()
+	w.Header().Set("Content-Type", "application/json")
+
+	sessionToken := getSessionToken(r)
+	if sessionToken == "" {
+		json.NewEncoder(w).Encode(map[string]any{
+			"authenticated": false,
+			"athleteId":     nil,
+		})
+		return
+	}
+
+	tokens, err := h.Store.GetTokensBySession(sessionToken)
 	if err != nil {
 		log.Printf("Status check error: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 
 	if tokens == nil {
 		json.NewEncoder(w).Encode(map[string]any{
@@ -70,10 +102,13 @@ func (h *AuthHandler) Status(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	if err := h.Store.ClearTokens(); err != nil {
-		log.Printf("Logout error: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
+	sessionToken := getSessionToken(r)
+	if sessionToken != "" {
+		if err := h.Store.ClearTokensBySession(sessionToken); err != nil {
+			log.Printf("Logout error: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

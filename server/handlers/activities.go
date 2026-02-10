@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"cadence-server/strava"
 	"cadence-server/store"
+	"cadence-server/strava"
 )
 
 type ActivitiesHandler struct {
@@ -22,7 +22,15 @@ var runTypes = map[string]bool{
 }
 
 func (h *ActivitiesHandler) GetActivities(w http.ResponseWriter, r *http.Request) {
-	tokens, err := h.Store.GetTokens()
+	sessionToken := getSessionToken(r)
+	if sessionToken == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Not authenticated"})
+		return
+	}
+
+	tokens, err := h.Store.GetTokensBySession(sessionToken)
 	if err != nil {
 		log.Printf("Activities token check error: %v", err)
 		http.Error(w, `{"error":"Internal server error"}`, http.StatusInternalServerError)
@@ -35,10 +43,25 @@ func (h *ActivitiesHandler) GetActivities(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	accessToken, refreshed, err := h.Strava.GetValidAccessToken(tokens)
+	if err != nil {
+		log.Printf("Activities access token error: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to get access token"})
+		return
+	}
+
+	if refreshed != nil {
+		if err := h.Store.UpdateTokens(*refreshed); err != nil {
+			log.Printf("Activities token update error: %v", err)
+		}
+	}
+
 	now := time.Now().Unix()
 	thirtyDaysAgo := now - 30*24*60*60
 
-	activities, err := h.Strava.FetchActivities(thirtyDaysAgo, now)
+	activities, err := h.Strava.FetchActivities(accessToken, thirtyDaysAgo, now)
 	if err != nil {
 		log.Printf("Activities fetch error: %v", err)
 		w.Header().Set("Content-Type", "application/json")
