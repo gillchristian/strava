@@ -6,7 +6,15 @@
       "Bash(npx vite build:*)",
       "Bash(npx tsx:*)",
       "Bash(lsof:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(npm run lint:*)",
+      "Bash(head:*)",
+      "Bash(git mv:*)",
+      "Bash(git rm:*)",
+      "Bash(npm --prefix /Users/bb8/dev/strava-trends/client run build)",
+      "Bash(npm --prefix /Users/bb8/dev/strava-trends/client run lint)",
+      "Bash(npm run build:*)",
+      "Bash(git -C /Users/bb8/dev/strava-trends status)"
     ]
   }
 }

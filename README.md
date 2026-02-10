@@ -6,10 +6,13 @@ Visualize your Strava activity trends over time.
 
 ```
 npm install
-cp .env.example .env
+npm --prefix client install
+npm --prefix server install
+cp client/.env.example client/.env
+cp server/.env.example server/.env
 ```
 
-Add your `STRAVA_CLIENT_ID` and `STRAVA_CLIENT_SECRET` to `.env`.
+Add your `STRAVA_CLIENT_ID` and `STRAVA_CLIENT_SECRET` to `server/.env`.
 
 ## Dev
 
@@ -22,7 +25,7 @@ Backend: http://localhost:3001
 
 ## Deploy
 
-**Frontend** → Vercel. Set `VITE_API_URL` to your fly.io backend URL.
+**Frontend** → Vercel (deploy from `client/`). Set `VITE_API_URL` to your fly.io backend URL.
 
 **Backend** → fly.io.
 
