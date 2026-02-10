@@ -1,6 +1,7 @@
 import { Layout } from './components/Layout';
 import { LoginButton } from './components/LoginButton';
 import { ActivitiesTable } from './components/ActivitiesTable';
+import { TrendsChart } from './components/TrendsChart';
 import { RefreshButton } from './components/RefreshButton';
 import { useAuth } from './hooks/useAuth';
 import { useActivities } from './hooks/useActivities';
@@ -48,6 +49,7 @@ function App() {
           </button>
         </div>
       </div>
+      <TrendsChart activities={activities} />
       <ActivitiesTable activities={activities} />
     </Layout>
   );
