@@ -42,7 +42,7 @@ export function TrendsChart({ activities }: { activities: StravaActivity[] }) {
 
   if (chartData.length === 0) return null;
 
-  const handleLegendClick = (entry: { dataKey?: string }) => {
+  const handleLegendClick = (entry: { dataKey?: string | number }) => {
     if (!entry.dataKey) return;
     setHidden((prev) => {
       const next = new Set(prev);
