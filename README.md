@@ -1,13 +1,12 @@
-# Trends
+# Cadence
 
-Visualize your Strava activity trends over time.
+A monthly snapshot of your running metrics. Visualize your Strava activity trends over time.
 
 ## Setup
 
 ```
 npm install
 npm --prefix client install
-npm --prefix server install
 cp client/.env.example client/.env
 cp server/.env.example server/.env
 ```
@@ -17,11 +16,9 @@ Add your `STRAVA_CLIENT_ID` and `STRAVA_CLIENT_SECRET` to `server/.env`.
 ## Dev
 
 ```
-npm run dev
+cd server && go run .   # Backend: http://localhost:3001
+npm run dev             # Frontend: http://localhost:5173
 ```
-
-Frontend: http://localhost:5173
-Backend: http://localhost:3001
 
 ## Deploy
 

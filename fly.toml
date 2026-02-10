@@ -7,10 +7,10 @@ app = 'strava-trends'
 primary_region = 'sjc'
 
 [build]
+  dockerfile = 'server/Dockerfile'
 
 [env]
   DB_PATH = '/data/tokens.db'
-  NODE_ENV = 'production'
   PORT = '3001'
 
 [[mounts]]

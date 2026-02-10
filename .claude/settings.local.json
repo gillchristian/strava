@@ -14,7 +14,12 @@
       "Bash(npm --prefix /Users/bb8/dev/strava-trends/client run build)",
       "Bash(npm --prefix /Users/bb8/dev/strava-trends/client run lint)",
       "Bash(npm run build:*)",
-      "Bash(git -C /Users/bb8/dev/strava-trends status)"
+      "Bash(git -C /Users/bb8/dev/strava-trends status)",
+      "Bash(git log:*)",
+      "Bash(go version:*)",
+      "Bash(go mod init:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(go build:*)"
     ]
   }
 }
