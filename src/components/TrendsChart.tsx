@@ -42,12 +42,14 @@ export function TrendsChart({ activities }: { activities: StravaActivity[] }) {
 
   if (chartData.length === 0) return null;
 
-  const handleLegendClick = (entry: { dataKey?: string | number }) => {
-    if (!entry.dataKey) return;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleLegendClick = (entry: any) => {
+    const key = entry.dataKey as string | undefined;
+    if (!key) return;
     setHidden((prev) => {
       const next = new Set(prev);
-      if (next.has(entry.dataKey!)) next.delete(entry.dataKey!);
-      else next.add(entry.dataKey!);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
